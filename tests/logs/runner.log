@@ -1,0 +1,13 @@
+2017-02-24 16:54:30,042 [DEBUG] Create session ssh_session, session type <class 'core.sessions.ssh.SSHSession'>
+2017-02-24 16:54:30,042 [DEBUG] Create session telnet_session, session type <class 'core.sessions.telnet.TelnetSession'>
+2017-02-24 16:54:30,042 [DEBUG] Create session ftp_session, session type <class 'core.sessions.ftp.FTPSession'>
+2017-02-24 16:54:30,042 [DEBUG] Create session sftp_session, session type <class 'core.sessions.sftp.SFTPSession'>
+2017-02-24 16:54:30,042 [DEBUG] Currently not login into server ....
+2017-02-24 16:54:30,042 [DEBUG] Try connect to server core.sessions.telnet.TelnetConnection
+2017-02-24 16:54:30,042 [DEBUG] hostname: 192.168.33.10, port: 23, username: test, password: test
+2017-02-24 16:54:30,094 [DEBUG] Connect to server successful ....
+2017-02-24 16:54:32,595 [DEBUG] Execute command -> cd download; pwd
+2017-02-24 16:54:32,796 [DEBUG] Response -> /home/test/download
+2017-02-24 16:54:32,796 [DEBUG] Execute command -> ls -lrt
+2017-02-24 16:54:32,996 [DEBUG] Response -> total 4
+-rw-r--r-- 1 test test 1655 Feb 23 06:45 test.txt

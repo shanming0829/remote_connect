@@ -1,0 +1,2 @@
+class ShellSessionException(Exception):
+    pass
