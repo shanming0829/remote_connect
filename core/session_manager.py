@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
+import os
 
-
+from core.utils.config import Config
 from sessions import TelnetSession, SSHSession, FTPSession, SFTPSession
-from core.log.log import Logger
 
 __authors__ = "Shanming Liu"
 
@@ -18,14 +18,15 @@ class SessionManagerWarning(Warning):
 class _SessionManager(object):
     Protocols = {'TELNET': TelnetSession, 'SSH': SSHSession, 'FTP': FTPSession, 'SFTP': SFTPSession}
 
-    def __init__(self, config, logger=None):
-        self.config = config
+    def __init__(self, logger):
+        self.config = Config()
 
-        self.logger = logger if logger is not None else Logger('session_manager')
+        self.parent_logger = logger
+        self.logger = logger.getChild('session_manager')
 
     def create_sessions(self):
         sessions = dict()
-        for name in self.config.keys():
+        for name in self.config.sessions.keys():
             sessions[name] = self.get_session(name)
 
         return sessions
@@ -33,9 +34,10 @@ class _SessionManager(object):
     def _create_session(self, session_name, protocol_type):
         self.logger.debug('Create session {}, session type {}'.format(session_name, str(protocol_type)))
 
-        session_config = self.config[session_name]
-
-        return protocol_type(logger=self.logger.getChild(session_name), **session_config)
+        session_config = self.config.sessions[session_name]
+        child_file_path = os.path.join(self.config.config.log.dir, '{}.log'.format(session_name))
+        child_logger = self.parent_logger.get_child(session_name, file_path=child_file_path)
+        return protocol_type(logger=child_logger, **session_config)
 
     def _check_session_type(self, session_name, session_config):
         port = session_config.get('port', None)
@@ -62,7 +64,7 @@ class _SessionManager(object):
                     "Create session {} failed, given port is not regular, please given protocol".format(session_name))
 
     def get_session(self, session_name):
-        session_config = self.config.get(session_name, None)
+        session_config = self.config.sessions.get(session_name, None)
         if not session_config:
             raise SessionManagerWarning("Create session {} failed, no detail info for session".format(session_name))
 

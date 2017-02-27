@@ -140,8 +140,8 @@ class ShellSession(BasicSession):
             self.timeout = timeout
 
     def parse_output(self, res, command, prompt):
-        self.latest_prompt = prompt
-        return res[res.index(command) + len(command) + 1:].strip(), prompt
+        self.latest_prompt = prompt.strip()
+        return res[res.index(command) + len(command) + 1: res.rindex(prompt)].strip(), prompt
 
     def find_regex_response(self, res):
         for _p in self.prompt:

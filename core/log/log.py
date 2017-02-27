@@ -1,10 +1,12 @@
 # -*- coding: UTF-8 -*-
-__authors__ = "Shanming Liu"
+
 
 import logging
 import os
 
 import sys
+
+__authors__ = "Shanming Liu"
 
 
 class LoggerException(Exception):
@@ -49,6 +51,12 @@ class Logger(object):
     def get_log_formatter(self, formatter):
         return self.logger_formatter if formatter is None else formatter
 
+    def get_child(self, suffix, console=False, file_path=None):
+        if self.logger.root is not self.logger:
+            suffix = '.'.join((self.name, suffix))
+
+            return self.__class__(suffix, level=self.level, console=console, file_path=file_path)
+
     def __getattr__(self, item):
         try:
             return getattr(self.logger, item)
@@ -57,8 +65,9 @@ class Logger(object):
 
 
 if __name__ == '__main__':
-    logger1 = Logger('aaaa')
-    logger2 = Logger('aaaa')
+    logger1 = Logger('aaaa', level='DEBUG', file_path='test1.log')
+    logger2 = logger1.getChild('bbb', file_path='test2.log')
+    # logger2.addHandler(console_handle)
 
-    print(id(logger1.logger))
-    print(id(logger2.logger))
+    logger1.debug('aa')
+    logger2.debug('bb')
