@@ -140,7 +140,7 @@ class ShellSession(BasicSession):
             self.timeout = timeout
 
     def parse_output(self, res, command, prompt):
-        self.logger.debug("Expected prompt ->{}, match result->{}".format(prompt, res))
+        # self.logger.debug("Expected prompt ->{}, match result->{}".format(prompt, res))
         self.latest_prompt = prompt
         return res[res.index(command) + len(command) + 1: res.rindex(prompt)].strip(), prompt
 
@@ -152,7 +152,7 @@ class ShellSession(BasicSession):
 
     @property
     def latest_prompt(self):
-        self._latest_prompt
+        return self._latest_prompt
 
     @latest_prompt.setter
     def latest_prompt(self, prompt):
