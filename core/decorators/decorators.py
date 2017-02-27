@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-
+import socket
 
 from decorator import decorator
 from core.context.contexts import thread_acquire_and_release
@@ -19,6 +19,12 @@ def must_connected(func, self, *args, **kwargs):
 
 @decorator
 def command_execute(func, self, command, *args, **kwargs):
+    # for remain data parse
+    try:
+        self._session.read(self.buffer_size)
+    except socket.timeout:
+        pass
+
     self.logger.debug('Execute command -> {}'.format(command))
     # self.logger.debug('{} {}'.format(self.latest_prompt, command))
 
