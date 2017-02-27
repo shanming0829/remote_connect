@@ -81,6 +81,12 @@ class ShellSession(BasicSession):
         return res
 
     def _execute(self, command):
+        # for remain data parse
+        try:
+            self._session.read(self.buffer_size)
+        except socket.timeout:
+            pass
+
         start_time = time.time()
         res = ''
         self._session.write(command)
