@@ -36,6 +36,8 @@ class ShellSession(BasicSession):
         self._connected = False
         self._connection_prototype = None
 
+        self._latest_prompt = None
+
         super(ShellSession, self).__init__(**kwargs)
 
     @property
@@ -139,6 +141,7 @@ class ShellSession(BasicSession):
 
     def parse_output(self, res, command, prompt):
         self.logger.debug("Expected prompt ->{}, match result->{}".format(prompt, res))
+        self.latest_prompt = prompt
         return res[res.index(command) + len(command) + 1: res.rindex(prompt)].strip(), prompt
 
     def find_regex_response(self, res):
@@ -146,3 +149,11 @@ class ShellSession(BasicSession):
             match = _p.search(res)
             if match:
                 return match.group()
+
+    @property
+    def latest_prompt(self):
+        self._latest_prompt
+
+    @latest_prompt.setter
+    def latest_prompt(self, prompt):
+        self._latest_prompt = prompt
