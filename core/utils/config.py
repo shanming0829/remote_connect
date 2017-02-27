@@ -1,4 +1,8 @@
+# -*- coding: UTF-8 -*-
+
 import yaml
+
+__authors__ = "Shanming Liu"
 
 
 class Config(object):

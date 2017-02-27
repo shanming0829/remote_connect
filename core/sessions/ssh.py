@@ -1,4 +1,4 @@
-import socket
+# -*- coding: UTF-8 -*-
 
 import paramiko
 
@@ -22,7 +22,7 @@ class SSHSession(ShellSession):
 
 
 class SSHConnection(paramiko.SSHClient):
-    def __init__(self, hostname=None, port=0, username=None, password=None, timeout=30, lock=None):
+    def __init__(self, hostname=None, port=0, username=None, password=None, timeout=5, lock=None):
         self.connected = None
         self.hostname = hostname
         self.port = port

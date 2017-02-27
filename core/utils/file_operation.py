@@ -1,3 +1,7 @@
+# -*- coding: UTF-8 -*-
+__authors__ = "Shanming Liu"
+
+
 def get_des_file_name(src, des):
     if des is None:
         if hasattr(src, 'name'):

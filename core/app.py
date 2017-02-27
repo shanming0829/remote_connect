@@ -1,8 +1,12 @@
+# -*- Coding: UTF-8 -*-
+
 import os
 import yaml
 
 from core.session_manager import SessionManager
 from core.log.log import Logger
+
+__authors__ = "Shanming Liu"
 
 
 class AppException(RuntimeError):

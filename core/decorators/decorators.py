@@ -1,3 +1,6 @@
+# -*- coding: UTF-8 -*-
+__authors__ = "Shanming Liu"
+
 from decorator import decorator
 from core.context.contexts import thread_acquire_and_release
 

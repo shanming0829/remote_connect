@@ -1,5 +1,10 @@
+# -*- coding: UTF-8 -*-
+
+
 from sessions import TelnetSession, SSHSession, FTPSession, SFTPSession
 from core.log.log import Logger
+
+__authors__ = "Shanming Liu"
 
 
 class SessionManagerException(Exception):
