@@ -86,7 +86,7 @@ class ShellSession(BasicSession):
         while True:
             try:
                 data = self._session.read(self.buffer_size)
-                self.logger.debug("Receive data -> {}".format(data))
+                # self.logger.debug("Receive data -> {}".format(data))
             except socket.timeout:
                 data = ''
             res += data
