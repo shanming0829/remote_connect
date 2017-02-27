@@ -141,7 +141,9 @@ class ShellSession(BasicSession):
 
     def parse_output(self, res, command, prompt):
         self.latest_prompt = prompt.strip()
-        return res[res.index(command) + len(command) + 1: res.rindex(prompt)].strip(), prompt
+        if command in res:
+            return res[res.index(command) + len(command) + 1: res.rindex(prompt)].strip(), prompt
+        return res[: res.rindex(prompt)].strip(), prompt
 
     def find_regex_response(self, res):
         for _p in self.prompt:
