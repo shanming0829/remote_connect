@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 import abc
 from threading import RLock
 

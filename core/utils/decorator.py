@@ -1,4 +1,8 @@
+# -*- coding: UTF-8 -*-
+
 import functools
+
+__authors__ = "Shanming Liu"
 
 
 def log_context(logger, begin='*' * 100, end='*' * 100, level='DEBUG'):

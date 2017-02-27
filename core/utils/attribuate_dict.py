@@ -1,3 +1,6 @@
+# -*- coding: UTF-8 -*-
+__authors__ = "Shanming Liu"
+
 class AttributeDict(dict):
     def __init__(self, *args, **kwargs):
         super(AttributeDict, self).__init__(*args, **kwargs)

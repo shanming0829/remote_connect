@@ -1,3 +1,6 @@
+# -*- coding: UTF-8 -*-
+__authors__ = "Shanming Liu"
+
 import logging
 import os
 

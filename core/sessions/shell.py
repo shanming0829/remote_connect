@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 import re
 import socket
 import time
@@ -12,6 +14,10 @@ class ExecuteException(Exception):
     pass
 
 
+class ExecuteTimeoutException(ExecuteException):
+    pass
+
+
 class ShellSession(BasicSession):
     def __init__(self, hostname, port, username, password, **kwargs):
         self.default_prompt = [re.compile(r'[\r\n].*?>'), re.compile(r'[\r\n].*?\$'), re.compile(r'[\r\n].*?%')]
@@ -22,7 +28,7 @@ class ShellSession(BasicSession):
         self.password = password
         self.timeout = 5
         self.buffer_size = 1024
-        self.read_timeout = 5
+        self.read_timeout = 1
         self.read_duration = 0.01
         self.debug = False
 
@@ -53,7 +59,7 @@ class ShellSession(BasicSession):
                     raise e
                 continue
             else:
-                self.logger.debug('Connect to server successful ....')
+                self.logger.debug('Connectted to server successful ....')
                 self._connected = connected
                 self._session = session
                 self.empty()
@@ -90,7 +96,7 @@ class ShellSession(BasicSession):
 
             tmp_time = time.time()
             if tmp_time - start_time > self.timeout:
-                raise ExecuteException
+                raise ExecuteTimeoutException
             time.sleep(self.read_duration)
 
     @must_connected
@@ -103,7 +109,7 @@ class ShellSession(BasicSession):
 
             if self.debug:
                 print(login_data)
-            time.sleep(0.5)
+            time.sleep(1)
             if not login_data:
                 break
 

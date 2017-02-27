@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 import telnetlib
 
 from core.context.contexts import switch_sock_read_timeout
@@ -19,7 +21,7 @@ class TelnetSession(ShellSession):
 
 
 class TelnetConnection(telnetlib.Telnet):
-    def __init__(self, host=None, port=0, username=None, password=None, timeout=30, lock=None):
+    def __init__(self, host=None, port=0, username=None, password=None, timeout=5, lock=None):
         self.connected = False
 
         self.username = username
@@ -28,6 +30,8 @@ class TelnetConnection(telnetlib.Telnet):
         telnetlib.Telnet.__init__(self, host, port, timeout)
 
         self.login()
+
+        self.pipe_reader = self.sock.makefile('rb')
 
     @thread_lock
     def login(self):
