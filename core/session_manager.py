@@ -36,7 +36,7 @@ class _SessionManager(object):
 
         session_config = self.config.sessions[session_name]
         child_file_path = os.path.join(self.config.config.log.dir, '{}.log'.format(session_name))
-        child_logger = self.parent_logger.get_child(session_name, file_path=child_file_path)
+        child_logger = self.parent_logger.get_child(session_name, level="DEBUG", file_path=child_file_path)
         return protocol_type(logger=child_logger, **session_config)
 
     def _check_session_type(self, session_name, session_config):

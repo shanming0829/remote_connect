@@ -51,11 +51,11 @@ class Logger(object):
     def get_log_formatter(self, formatter):
         return self.logger_formatter if formatter is None else formatter
 
-    def get_child(self, suffix, console=False, file_path=None):
+    def get_child(self, suffix, level=logging.INFO, console=False, file_path=None):
         if self.logger.root is not self.logger:
             suffix = '.'.join((self.name, suffix))
 
-            return self.__class__(suffix, level=self.level, console=console, file_path=file_path)
+            return self.__class__(suffix, level=level, console=console, file_path=file_path)
 
     def __getattr__(self, item):
         try:
