@@ -3,8 +3,10 @@
 import os
 import yaml
 
+from core.decorators.decorators import class_singleton
 from core.session_manager import SessionManager
 from core.log.log import Logger
+from core.utils.config import Config
 
 __authors__ = "Shanming Liu"
 
@@ -13,6 +15,7 @@ class AppException(RuntimeError):
     pass
 
 
+@class_singleton
 class App(object):
     def __init__(self, config_path=None):
         self.session_manager = None
@@ -25,7 +28,8 @@ class App(object):
             self.load_config_file(config_path)
 
     def load_config_file(self, config_path):
-        self.config = yaml.load(open(config_path))
+        self.config = Config()
+        self.config.load_config_file(config_path)
 
         self._init_log()
 
@@ -48,7 +52,7 @@ class App(object):
         if 'sessions' not in self.config:
             raise AppException("No sessions found in config file, system exit.")
 
-        self.session_manager = SessionManager(self.config['sessions'], self.logger)
+        self.session_manager = SessionManager(self.logger)
 
         for name, session in self.session_manager.create_sessions().iteritems():
             setattr(self, name, session)

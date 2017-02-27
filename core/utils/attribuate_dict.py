@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
+
 __authors__ = "Shanming Liu"
+
 
 class AttributeDict(dict):
     def __init__(self, *args, **kwargs):
@@ -13,10 +15,33 @@ class AttributeDict(dict):
             return self[item]
         raise AttributeError
 
+    def update_dict(self, **kwargs):
+        for k, v in kwargs.iteritems():
+            if isinstance(v, (basestring, int, float, AttributeDict)):
+                self[k] = v
+            elif isinstance(v, dict):
+                tmp_dict = AttributeDict()
+                tmp_dict.update_dict(**v)
+                self[k] = tmp_dict
+            elif isinstance(v, (tuple, list)):
+                self[k] = self.update_list(*v)
+
+    def update_list(self, *args):
+        values = []
+        for item in args:
+            if isinstance(item, (basestring, int, float, AttributeDict)):
+                values.append(item)
+            elif isinstance(item, dict):
+                tmp_dict = AttributeDict()
+                tmp_dict.update_dict(**item)
+                values.append(tmp_dict)
+            elif isinstance(item, (tuple, list)):
+                values.append(self.update_list(*item))
+
+        return values
+
 
 if __name__ == '__main__':
     d = AttributeDict()
-    print(d.__dict__)
-    print(d.a)
-    print(d.b)
-    print(d.c)
+    d.update_dict(a=10, b={'c': 20, 'd': 30, 'e': [1, [2, 3]]})
+    print(d.b.e)
