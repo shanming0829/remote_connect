@@ -86,6 +86,7 @@ class ShellSession(BasicSession):
         while True:
             try:
                 data = self._session.read(self.buffer_size)
+                self.logger.debug("Receive data -> {}".format(data))
             except socket.timeout:
                 data = ''
             res += data
@@ -123,6 +124,8 @@ class ShellSession(BasicSession):
             for i in prompt:
                 _prompt.extend(self.set_prompt(i))
             self.prompt = _prompt
+        elif isinstance(prompt, re._pattern_type):
+            self.prompt = prompt
         else:
             raise TypeError
 
