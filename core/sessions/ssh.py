@@ -1,14 +1,16 @@
 # -*- coding: UTF-8 -*-
-
+from __future__ import unicode_literals
 import paramiko
 
 from core.sessions.shell import ShellSession, must_connected, ShellConnection
 
 
 class SSHSession(ShellSession):
-    def __init__(self, hostname=None, port=22, username=None, password=None, logger=None, timeout=None, crlf=None,
+    def __init__(self, sid=None, hostname=None, port=22, username=None, password=None, logger=None, timeout=None,
+                 crlf=None,
                  **kwargs):
         super(SSHSession, self).__init__(
+            sid=sid,
             hostname=hostname,
             port=port,
             username=username,

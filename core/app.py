@@ -1,6 +1,8 @@
 # -*- Coding: UTF-8 -*-
+from __future__ import unicode_literals
 
 import os
+import datetime
 
 from core.decorators.decorators import class_singleton
 from core.session_manager import SessionManager
@@ -42,7 +44,8 @@ class App(object):
     def _fix_config_log(self, console=True, log_level=None, log_dir=None, log_file=None):
         self.config.config.log.console = bool(console)
         self.config.config.log.level = 'INFO' if log_level is None else log_level
-        self.config.config.log.dir = 'logs' if log_dir is None else log_dir
+        tmp_dir = os.path.abspath('logs' if log_dir is None else log_dir)
+        self.config.config.log.dir = os.path.join(tmp_dir, datetime.datetime.today().strftime('%Y%m%d_%H%M%S'))
         self.config.config.log.file = 'runner.log' if log_file is None else log_file
 
     def _fix_config_session(self, crlf=None, timeout=None):

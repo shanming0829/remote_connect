@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-
+from __future__ import unicode_literals
 
 import logging
 import os
@@ -62,6 +62,10 @@ class Logger(object):
             return getattr(self.logger, item)
         except AttributeError:
             raise LoggerAttributeError("No Attribute name of {}".format(str(item)))
+
+    def flush(self):
+        for handle in self.logger.handlers:
+            handle.flush()
 
 
 if __name__ == '__main__':

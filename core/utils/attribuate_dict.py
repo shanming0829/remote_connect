@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+from __future__ import unicode_literals
+import yaml
 
 __authors__ = "Shanming Liu"
 
@@ -39,6 +41,13 @@ class AttributeDict(dict):
                 values.append(self.update_list(*item))
 
         return values
+
+    def load_yaml_file(self, filename):
+        with open(filename) as f:
+            self.update_dict(**yaml.load(f))
+
+    def load_ini_file(self, filename):
+        pass
 
 
 if __name__ == '__main__':

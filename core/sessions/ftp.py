@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-
+from __future__ import unicode_literals
 import ftplib
 import os
 
@@ -10,8 +10,9 @@ from core.sessions.exceptions.ftp import FTPSessionException
 
 
 class FTPSession(BasicFTPSession):
-    def __init__(self, hostname, port=21, username=None, password=None, **kwargs):
+    def __init__(self, sid=None, hostname=None, port=21, username=None, password=None, **kwargs):
         super(FTPSession, self).__init__(
+            sid=sid,
             hostname=hostname,
             port=port,
             username=username,
