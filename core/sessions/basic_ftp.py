@@ -3,23 +3,19 @@
 import socket
 from contextlib import contextmanager
 
-from core.decorators.decorators import must_connected, ftp_file_transform, thread_lock
+from core.decorators.decorators import must_connected, ftp_file_transform
 from core.sessions.basic_session import BasicSession
 
 
 class BasicFTPSession(BasicSession):
-    def __init__(self, hostname, port, username=None, password=None, **kwargs):
-        self.hostname = hostname
-        self.port = port
-        self.username = username
-        self.password = password
+    def __init__(self, hostname=None, port=None, username=None, password=None, logger=None, **kwargs):
 
         self._session = None
         self._connected = False
 
         self._connection_prototype = None
 
-        super(BasicFTPSession, self).__init__(**kwargs)
+        super(BasicFTPSession, self).__init__(hostname, port, username, password, logger, **kwargs)
 
     @property
     def connected(self):

@@ -9,7 +9,7 @@ __authors__ = "Shanming Liu"
 
 
 @class_singleton
-class Config(AttributeDict):
+class _Config(AttributeDict):
     def load_config_file(self, config_file):
         if config_file.endswith('.yaml'):
             self._load_yaml_config(config_file)
@@ -24,6 +24,8 @@ class Config(AttributeDict):
     def _load_ini_config(self, config_file):
         pass
 
+
+Config = _Config
 
 if __name__ == '__main__':
     config1 = Config()

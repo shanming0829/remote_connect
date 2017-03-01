@@ -2,14 +2,20 @@
 
 import telnetlib
 
-from core.context.contexts import switch_sock_read_timeout
-from core.decorators.decorators import thread_lock
-from core.sessions.shell import ShellSession, must_connected, CRLF
+from core.sessions.shell import ShellSession, must_connected, ShellConnection
 
 
 class TelnetSession(ShellSession):
-    def __init__(self, hostname=None, port=23, username=None, password=None, **kwargs):
-        super(TelnetSession, self).__init__(hostname, port, username, password, **kwargs)
+    def __init__(self, hostname=None, port=23, username=None, password=None, logger=None, timeout=None, crlf=None,
+                 **kwargs):
+        super(TelnetSession, self).__init__(
+            hostname=hostname,
+            port=port,
+            username=username,
+            password=password,
+            logger=logger,
+            timeout=timeout,
+            crlf=crlf, **kwargs)
 
     @must_connected
     def command_once(self, command, prompt=None, timeout=None):
@@ -20,20 +26,19 @@ class TelnetSession(ShellSession):
         return super(TelnetSession, self).login(retry)
 
 
-class TelnetConnection(telnetlib.Telnet):
-    def __init__(self, host=None, port=0, username=None, password=None, timeout=5, lock=None):
+class TelnetConnection(telnetlib.Telnet, ShellConnection):
+    def __init__(self, host=None, port=0, username=None, password=None, timeout=5, crlf=None, lock=None):
         self.connected = False
 
         self.username = username
         self.password = password
-        self.lock = lock
         telnetlib.Telnet.__init__(self, host, port, timeout)
+        ShellConnection.__init__(self, timeout=timeout, crlf=crlf)
 
         self.login()
 
         self.pipe_reader = self.sock.makefile('rb')
 
-    @thread_lock
     def login(self):
         try:
             self.read_until("login:", self.timeout)
@@ -46,20 +51,10 @@ class TelnetConnection(telnetlib.Telnet):
             raise EnvironmentError
         else:
             self.connected = connected
+            self.conn = self.sock
 
-    @thread_lock
-    def write(self, buffer, enter=CRLF):
-        telnetlib.Telnet.write(self, buffer + enter)
-
-    @thread_lock
-    def read(self, buffer_size, timeout=None):
-        if timeout is not None and timeout != self.sock.gettimeout():
-            with switch_sock_read_timeout(self.sock, timeout):
-                return self.sock.recv(buffer_size)
-        return self.sock.recv(buffer_size)
-
-    def set_timeout(self, timeout):
-        self.sock.settimeout(timeout)
+    def write(self, buffer):
+        telnetlib.Telnet.write(self, buffer + self.crlf)
 
 
 if __name__ == '__main__':
