@@ -3,8 +3,6 @@
 import abc
 from threading import RLock
 
-from core.log.log import Logger
-
 
 class ClosingContextManager(object):
     def __enter__(self):
@@ -17,8 +15,12 @@ class ClosingContextManager(object):
 class BasicSession(ClosingContextManager):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, logger=None, **kwargs):
-        self.logger = logger if logger else Logger(self.__class__.__name__, level='DEBUG')
+    def __init__(self, hostname, port, username, password, logger, **kwargs):
+        self.hostname = hostname
+        self.port = port
+        self.username = username
+        self.password = password
+        self.logger = logger
         self.__dict__.update(kwargs)
 
         self.lock = RLock()

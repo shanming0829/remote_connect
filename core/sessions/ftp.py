@@ -11,7 +11,11 @@ from core.sessions.exceptions.ftp import FTPSessionException
 
 class FTPSession(BasicFTPSession):
     def __init__(self, hostname, port=21, username=None, password=None, **kwargs):
-        super(FTPSession, self).__init__(hostname, port, username, password, **kwargs)
+        super(FTPSession, self).__init__(
+            hostname=hostname,
+            port=port,
+            username=username,
+            password=password, **kwargs)
 
     def login(self, retry=3):
         self._connection_prototype = FTPConnection

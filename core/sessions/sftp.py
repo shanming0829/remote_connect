@@ -9,7 +9,11 @@ from core.sessions.basic_ftp import BasicFTPSession
 
 class SFTPSession(BasicFTPSession):
     def __init__(self, hostname, port=22, username=None, password=None, **kwargs):
-        super(SFTPSession, self).__init__(hostname, port, username, password, **kwargs)
+        super(SFTPSession, self).__init__(
+            hostname=hostname,
+            port=port,
+            username=username,
+            password=password, **kwargs)
 
     def login(self, retry=3):
         self._connection_prototype = SFTPConnection

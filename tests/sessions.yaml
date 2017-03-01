@@ -4,9 +4,13 @@ config:
         console: True
         dir: logs
         file: runner.log
+    session:
+        crlf: "\n"
+        timeout: 10
 
 sessions:
     telnet_session:
+        level: INFO
         hostname: 192.168.33.10
         protocol: telnet
         username: test

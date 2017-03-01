@@ -9,7 +9,7 @@ import sys
 __authors__ = "Shanming Liu"
 
 
-class LoggerException(Exception):
+class LoggerAttributeError(AttributeError):
     pass
 
 
@@ -55,13 +55,13 @@ class Logger(object):
         if self.logger.root is not self.logger:
             suffix = '.'.join((self.name, suffix))
 
-            return self.__class__(suffix, level=level, console=console, file_path=file_path)
+            return Logger(suffix, level=level, console=console, file_path=file_path)
 
     def __getattr__(self, item):
         try:
             return getattr(self.logger, item)
         except AttributeError:
-            raise LoggerException("No Attribute name of {}".format(str(item)))
+            raise LoggerAttributeError("No Attribute name of {}".format(str(item)))
 
 
 if __name__ == '__main__':

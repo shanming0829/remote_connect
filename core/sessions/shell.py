@@ -1,36 +1,26 @@
 # -*- coding: UTF-8 -*-
-
+from __future__ import unicode_literals
 import re
 import socket
 import time
+import select
 
-from core.decorators.decorators import must_connected, command_execute
+from core.decorators.decorators import must_connected, command_execute, thread_lock
 from core.sessions.basic_session import BasicSession
-
-CRLF = "\r\n"
-
-
-class ExecuteException(Exception):
-    pass
-
-
-class ExecuteTimeoutException(ExecuteException):
-    pass
+from core.sessions.exceptions.shell import ShellConnectionReadException, ExecuteTimeoutException
 
 
 class ShellSession(BasicSession):
-    def __init__(self, hostname, port, username, password, **kwargs):
+    def __init__(self, hostname=None, port=None, username=None, password=None, logger=None, timeout=None, crlf=None,
+                 **kwargs):
         self.default_prompt = [re.compile(r'[\r\n].*?>'), re.compile(r'[\r\n].*?\$'), re.compile(r'[\r\n].*?%')]
         self.prompt = self.default_prompt
-        self.hostname = hostname
-        self.port = port
-        self.username = username
-        self.password = password
-        self.timeout = 5
-        self.buffer_size = 1024
+        self.default_timeout = timeout
+        self.timeout = self.default_timeout
+        self.crlf = crlf
+        self.buffer_size = 8192
         self.read_timeout = 1
         self.read_duration = 0.01
-        self.debug = False
 
         self._session = None
         self._connected = False
@@ -38,7 +28,7 @@ class ShellSession(BasicSession):
 
         self._latest_prompt = None
 
-        super(ShellSession, self).__init__(**kwargs)
+        super(ShellSession, self).__init__(hostname, port, username, password, logger, **kwargs)
 
     @property
     def connected(self):
@@ -52,6 +42,7 @@ class ShellSession(BasicSession):
                 self.logger.debug('hostname: {}, port: {}, username: {}, password: {}'.
                                   format(self.hostname, self.port, self.username, self.password))
                 session = self._connection_prototype(self.hostname, self.port, self.username, self.password,
+                                                     timeout=self.read_timeout, crlf=self.crlf,
                                                      lock=self.lock)
                 connected = True
             except socket.error as e:
@@ -80,6 +71,7 @@ class ShellSession(BasicSession):
         res, p = self._execute(command)
         return res
 
+    @thread_lock
     def _execute(self, command):
         start_time = time.time()
         res = ''
@@ -89,7 +81,7 @@ class ShellSession(BasicSession):
             try:
                 data = self._session.read(self.buffer_size)
                 print(data)
-            except socket.timeout:
+            except ShellConnectionReadException:
                 data = ''
             res += data
 
@@ -99,7 +91,7 @@ class ShellSession(BasicSession):
 
             tmp_time = time.time()
             if tmp_time - start_time > self.timeout:
-                raise ExecuteTimeoutException
+                raise ExecuteTimeoutException("Not match the expected prompt ->".format(str(self.prompt)))
             time.sleep(self.read_duration)
 
     @must_connected
@@ -107,11 +99,9 @@ class ShellSession(BasicSession):
         while True:
             try:
                 login_data = self._session.read(self.buffer_size, timeout=1)
-            except socket.timeout:
+            except ShellConnectionReadException:
                 login_data = ''
 
-            if self.debug:
-                print(login_data)
             time.sleep(1)
             if not login_data:
                 break
@@ -127,7 +117,7 @@ class ShellSession(BasicSession):
                 _prompt.extend(self.set_prompt(i))
             self.prompt = _prompt
         elif isinstance(prompt, re._pattern_type):
-            self.prompt = prompt
+            self.prompt = [prompt]
         else:
             raise TypeError
 
@@ -138,6 +128,7 @@ class ShellSession(BasicSession):
     def set_timeout(self, timeout=None):
         if timeout is not None:
             self.timeout = timeout
+        self.timeout = self.default_timeout
 
     def parse_output(self, res, command, prompt):
         self.latest_prompt = prompt.strip()
@@ -158,3 +149,27 @@ class ShellSession(BasicSession):
     @latest_prompt.setter
     def latest_prompt(self, prompt):
         self._latest_prompt = prompt
+
+
+class ShellConnection(object):
+    def __init__(self, timeout=None, crlf=None):
+        self.timeout = timeout
+        self.crlf = crlf
+
+        self.conn = None
+
+        self.rlist = [self, ]
+        self.wlist = list()
+        self.xlist = list()
+
+    def write(self, buffer):
+        raise NotImplementedError
+
+    def read(self, buffer_size, timeout=None):
+        if timeout:
+            rlist, _, _ = select.select(self.rlist, self.wlist, self.xlist, timeout)
+        else:
+            rlist, _, _ = select.select(self.rlist, self.wlist, self.xlist, self.timeout)
+        if len(rlist) > 0:
+            return self.conn.recv(buffer_size)
+        raise ShellConnectionReadException
