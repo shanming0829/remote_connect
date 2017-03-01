@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+from __future__ import unicode_literals
 
 import socket
 from contextlib import contextmanager
@@ -8,14 +9,14 @@ from core.sessions.basic_session import BasicSession
 
 
 class BasicFTPSession(BasicSession):
-    def __init__(self, hostname=None, port=None, username=None, password=None, logger=None, **kwargs):
+    def __init__(self, sid=None, hostname=None, port=None, username=None, password=None, logger=None, **kwargs):
 
         self._session = None
         self._connected = False
 
         self._connection_prototype = None
 
-        super(BasicFTPSession, self).__init__(hostname, port, username, password, logger, **kwargs)
+        super(BasicFTPSession, self).__init__(sid, hostname, port, username, password, logger, **kwargs)
 
     @property
     def connected(self):

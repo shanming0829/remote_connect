@@ -1,6 +1,8 @@
-2017-03-01 09:53:13,589 [DEBUG] Create session ssh_session, session type <class 'core.sessions.ssh.SSHSession'>
-2017-03-01 09:53:13,592 [DEBUG] Create session telnet_session, session type <class 'core.sessions.telnet.TelnetSession'>
-2017-03-01 09:53:13,594 [DEBUG] Create session ftp_session, session type <class 'core.sessions.ftp.FTPSession'>
-2017-03-01 09:53:13,595 [DEBUG] Create session sftp_session, session type <class 'core.sessions.sftp.SFTPSession'>
-2017-03-01 09:53:13,596 [INFO ] Try connect to server <class 'core.sessions.telnet.TelnetConnection'>
-2017-03-01 09:53:13,785 [INFO ] Connectted to server successful ....
+2017-03-01 10:17:49,049 [DEBUG] Create session ssh_session, session type <class 'core.sessions.ssh.SSHSession'>
+2017-03-01 10:17:49,049 [DEBUG] Create session telnet_session, session type <class 'core.sessions.telnet.TelnetSession'>
+2017-03-01 10:17:49,051 [DEBUG] Create session ftp_session, session type <class 'core.sessions.ftp.FTPSession'>
+2017-03-01 10:17:49,051 [DEBUG] Create session sftp_session, session type <class 'core.sessions.sftp.SFTPSession'>
+2017-03-01 10:17:49,052 [INFO ] Try connect to server <class 'core.sessions.telnet.TelnetConnection'>
+2017-03-01 10:17:49,243 [INFO ] Connectted to server successful ....
+2017-03-01 10:17:50,845 [INFO ] Execute command -> cd download; pwd
+2017-03-01 10:17:51,046 [INFO ] Execute command -> ls -lrt

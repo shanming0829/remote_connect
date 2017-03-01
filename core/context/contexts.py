@@ -1,8 +1,9 @@
 # -*- coding: UTF-8 -*-
-__authors__ = "Shanming Liu"
-
+from __future__ import unicode_literals
 from contextlib import contextmanager
 import os
+
+__authors__ = "Shanming Liu"
 
 
 @contextmanager

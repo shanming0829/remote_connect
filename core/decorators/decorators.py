@@ -1,9 +1,7 @@
 # -*- coding: UTF-8 -*-
-import socket
-
+from __future__ import unicode_literals
 from decorator import decorator
 from core.context.contexts import thread_acquire_and_release
-from core.utils.utility import list2str, dict2str
 
 __authors__ = "Shanming Liu"
 
@@ -11,7 +9,7 @@ __authors__ = "Shanming Liu"
 @decorator
 def must_connected(func, self, *args, **kwargs):
     if not self.connected:
-        self.logger.debug('Currently not login into server ....')
+        self.logger.debug('Currently not login into {} ....'.format(self.hostname))
         self.login()
 
     return func(self, *args, **kwargs)
@@ -19,12 +17,15 @@ def must_connected(func, self, *args, **kwargs):
 
 @decorator
 def command_execute(func, self, command, *args, **kwargs):
+    self.empty()
+
+    self.logger.flush()
+
     self.logger.debug('Execute command -> {}'.format(command))
-    # self.logger.debug('{} {}'.format(self.latest_prompt, command))
 
     res = func(self, command, *args, **kwargs)
 
-    self.logger.debug('Response -> {}'.format(res))
+    # self.logger.debug('Response -> {}'.format(res))
 
     return res
 

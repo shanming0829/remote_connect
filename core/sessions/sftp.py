@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-
+from __future__ import unicode_literals
 import os
 import paramiko
 
@@ -8,8 +8,9 @@ from core.sessions.basic_ftp import BasicFTPSession
 
 
 class SFTPSession(BasicFTPSession):
-    def __init__(self, hostname, port=22, username=None, password=None, **kwargs):
+    def __init__(self, sid=None, hostname=None, port=22, username=None, password=None, **kwargs):
         super(SFTPSession, self).__init__(
+            sid=sid,
             hostname=hostname,
             port=port,
             username=username,

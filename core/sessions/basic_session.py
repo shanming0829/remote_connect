@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+from __future__ import unicode_literals
 
 import abc
 from threading import RLock
@@ -15,7 +16,8 @@ class ClosingContextManager(object):
 class BasicSession(ClosingContextManager):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, hostname, port, username, password, logger, **kwargs):
+    def __init__(self, sid, hostname, port, username, password, logger, **kwargs):
+        self.sid = sid
         self.hostname = hostname
         self.port = port
         self.username = username

@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+from __future__ import unicode_literals
+
 import os
 
 from core.utils.config import Config
@@ -37,7 +39,7 @@ class _SessionManager(object):
         session_config = self.config.sessions[session_name]
         child_file_path = os.path.join(self.config.config.log.dir, '{}.log'.format(session_name))
         child_logger = self.parent_logger.get_child(session_name, level=session_config.level, file_path=child_file_path)
-        return protocol_type(logger=child_logger, **session_config)
+        return protocol_type(sid=session_name, logger=child_logger, **session_config)
 
     def _check_session_type(self, session_name, session_config):
         port = session_config.get('port', None)

@@ -1,0 +1,12 @@
+config:
+    params:
+
+    log:
+        level: DEBUG
+        console: True
+        dir: logs
+        file: runner.log
+    session:
+        crlf: "\r"
+        timeout: 30
+    session_file: sessions.yaml

@@ -1,0 +1,4 @@
+coco_installation:
+    version: DUW-30
+    nodetype_cbm: /proj/civ-int/ftproot/git/up/C17.Q2/206/PA3/C17.Q2_206_DUW-NCI-DT_PA3.xml
+    nodetype_cbm_tool: /proj/civ-int/ftproot/cpp/up/designver/LSV98.1/CPP_LSV98.1_CBM_Tool_DESIGN_PA15.xml

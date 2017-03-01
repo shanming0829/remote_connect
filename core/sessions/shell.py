@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 from __future__ import unicode_literals
+from __future__ import print_function
 import re
 import socket
 import time
@@ -11,7 +12,8 @@ from core.sessions.exceptions.shell import ShellConnectionReadException, Execute
 
 
 class ShellSession(BasicSession):
-    def __init__(self, hostname=None, port=None, username=None, password=None, logger=None, timeout=None, crlf=None,
+    def __init__(self, sid=None, hostname=None, port=None, username=None, password=None, logger=None, timeout=None,
+                 crlf=None,
                  **kwargs):
         self.default_prompt = [re.compile(r'[\r\n].*?>'), re.compile(r'[\r\n].*?\$'), re.compile(r'[\r\n].*?%')]
         self.prompt = self.default_prompt
@@ -20,7 +22,7 @@ class ShellSession(BasicSession):
         self.crlf = crlf
         self.buffer_size = 8192
         self.read_timeout = 1
-        self.read_duration = 0.01
+        self.read_duration = 0.1
 
         self._session = None
         self._connected = False
@@ -28,7 +30,7 @@ class ShellSession(BasicSession):
 
         self._latest_prompt = None
 
-        super(ShellSession, self).__init__(hostname, port, username, password, logger, **kwargs)
+        super(ShellSession, self).__init__(sid, hostname, port, username, password, logger, **kwargs)
 
     @property
     def connected(self):
@@ -38,7 +40,7 @@ class ShellSession(BasicSession):
         connected = False
         while not connected:
             try:
-                self.logger.info('Try connect to server {}'.format(str(self._connection_prototype)))
+                self.logger.info('Try connect to {}.'.format(self.hostname))
                 self.logger.debug('hostname: {}, port: {}, username: {}, password: {}'.
                                   format(self.hostname, self.port, self.username, self.password))
                 session = self._connection_prototype(self.hostname, self.port, self.username, self.password,
@@ -52,10 +54,9 @@ class ShellSession(BasicSession):
                     raise e
                 continue
             else:
-                self.logger.info('Connectted to server successful ....')
+                self.logger.info('Connected to {} succeed.'.format(self.hostname))
                 self._connected = connected
                 self._session = session
-                self.empty()
             finally:
                 if not connected and self._session:
                     self._session.close()
@@ -63,16 +64,19 @@ class ShellSession(BasicSession):
     def close(self):
         self._session.close()
 
+    def read_data_writer(self, data):
+        self.logger.debug(data)
+
     @must_connected
     @command_execute
     def command(self, command, prompt=None, timeout=None):
         self.set_prompt(prompt)
         self.set_timeout(timeout)
-        res, p = self._execute(command)
+        res, p = self._execute(command, self.read_data_writer)
         return res
 
     @thread_lock
-    def _execute(self, command):
+    def _execute(self, command, callback=None):
         start_time = time.time()
         res = ''
         self._session.write(command)
@@ -80,31 +84,34 @@ class ShellSession(BasicSession):
         while True:
             try:
                 data = self._session.read(self.buffer_size)
-                print(data)
+                if callback:
+                    callback(data)
             except ShellConnectionReadException:
-                data = ''
-            res += data
+                tmp_time = time.time()
+                if tmp_time - start_time > self.timeout:
+                    raise ExecuteTimeoutException(
+                        "Not match the expected prompt ->{}, timeout ->{}".format(str([i.pattern for i in self.prompt]),
+                                                                                  self.timeout))
+                time.sleep(self.read_duration)
+                continue
+            else:
+                res += data
+                match = self.find_regex_response(res)
+                if match is not None:
+                    return self.parse_output(res, command, match)
 
-            match = self.find_regex_response(res)
-            if match is not None:
-                return self.parse_output(res, command, match)
-
-            tmp_time = time.time()
-            if tmp_time - start_time > self.timeout:
-                raise ExecuteTimeoutException("Not match the expected prompt ->".format(str(self.prompt)))
-            time.sleep(self.read_duration)
-
-    @must_connected
-    def empty(self):
+    def empty(self, retry=3):
         while True:
             try:
-                login_data = self._session.read(self.buffer_size, timeout=1)
+                remain_data = self._session.read(self.buffer_size, timeout=1)
             except ShellConnectionReadException:
-                login_data = ''
-
-            time.sleep(1)
-            if not login_data:
-                break
+                retry -= 1
+                if retry == 0:
+                    break
+                time.sleep(self.read_duration)
+                continue
+            else:
+                self.logger.debug(remain_data)
 
     def set_prompt(self, prompt=None):
         if prompt is None:
@@ -121,14 +128,11 @@ class ShellSession(BasicSession):
         else:
             raise TypeError
 
-    def set_session_timeout(self, timeout=None):
-        _timeout = timeout if timeout else self.read_timeout
-        self._session.set_timeout(_timeout)
-
     def set_timeout(self, timeout=None):
         if timeout is not None:
             self.timeout = timeout
-        self.timeout = self.default_timeout
+        else:
+            self.timeout = self.default_timeout
 
     def parse_output(self, res, command, prompt):
         self.latest_prompt = prompt.strip()
