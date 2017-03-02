@@ -9,15 +9,18 @@ import select
 from core.decorators.decorators import must_connected, command_execute, thread_lock
 from core.sessions.basic_session import BasicSession
 from core.sessions.exceptions.shell import ShellConnectionReadException, ExecuteTimeoutException
+from core.sessions.session_util import CommandPrompt, Command
 
 
 class ShellSession(BasicSession):
     def __init__(self, sid=None, hostname=None, port=None, username=None, password=None, logger=None, timeout=None,
                  crlf=None,
                  **kwargs):
-        self.default_prompt = [re.compile(r'[\r\n].*?>'), re.compile(r'[\r\n].*?\$'), re.compile(r'[\r\n].*?%')]
+        self.default_prompt = [CommandPrompt(prompt=i, action=None) for i in
+                               (r'[\r\n].*?>', r'[\r\n].*?\$', r'[\r\n].*?%')]
         self.prompt = self.default_prompt
         self.default_timeout = timeout
+        self.match_prompt = None
         self.timeout = self.default_timeout
         self.crlf = crlf
         self.buffer_size = 8192
@@ -27,8 +30,6 @@ class ShellSession(BasicSession):
         self._session = None
         self._connected = False
         self._connection_prototype = None
-
-        self._latest_prompt = None
 
         super(ShellSession, self).__init__(sid, hostname, port, username, password, logger, **kwargs)
 
@@ -72,14 +73,27 @@ class ShellSession(BasicSession):
     def command(self, command, prompt=None, timeout=None):
         self.set_prompt(prompt)
         self.set_timeout(timeout)
-        res, p = self._execute(command, self.read_data_writer)
-        return res
+
+        # res = list()
+
+        command = Command(command=command, prompt=self.prompt, timeout=self.timeout)
+        while command:
+            response = self._execute(command, self.read_data_writer)
+
+            # res.append(response)
+
+            if response.action:
+                command = Command(command=response.action, prompt=self.default_prompt, timeout=self.timeout)
+            else:
+                command = None
+
+        return response
 
     @thread_lock
     def _execute(self, command, callback=None):
         start_time = time.time()
         res = ''
-        self._session.write(command)
+        self._session.write(command.command)
 
         while True:
             try:
@@ -88,22 +102,23 @@ class ShellSession(BasicSession):
                     callback(data)
             except ShellConnectionReadException:
                 tmp_time = time.time()
-                if tmp_time - start_time > self.timeout:
+                if tmp_time - start_time > command.timeout:
                     raise ExecuteTimeoutException(
-                        "Not match the expected prompt ->{}, timeout ->{}".format(str([i.pattern for i in self.prompt]),
-                                                                                  self.timeout))
+                        "Not match the expected prompt ->{}, timeout ->{}".format(
+                            ','.join(str(i) for i in command.prompt),
+                            command.timeout))
                 time.sleep(self.read_duration)
                 continue
             else:
                 res += data
-                match = self.find_regex_response(res)
-                if match is not None:
-                    return self.parse_output(res, command, match)
+                response = command.parse_output(res)
+                if response.status:
+                    return response
 
     def empty(self, retry=3):
         while True:
             try:
-                remain_data = self._session.read(self.buffer_size, timeout=1)
+                remain_data = self._session.read(self.buffer_size, timeout=0.1)
             except ShellConnectionReadException:
                 retry -= 1
                 if retry == 0:
@@ -116,15 +131,22 @@ class ShellSession(BasicSession):
     def set_prompt(self, prompt=None):
         if prompt is None:
             self.prompt = self.default_prompt
-        elif isinstance(prompt, basestring):
-            self.prompt = [re.compile(prompt)]
+        elif isinstance(prompt, (basestring, re._pattern_type)):
+            self.prompt = [CommandPrompt(prompt=prompt, action=None)]
         elif isinstance(prompt, (tuple, list)):
-            _prompt = []
+            _prompt = list()
             for i in prompt:
-                _prompt.extend(self.set_prompt(i))
+                if isinstance(i, basestring):
+                    _prompt.append(CommandPrompt(prompt=i, action=None))
+                elif isinstance(i, (tuple, list)):
+                    _prompt.append(CommandPrompt(*i[:2]))
+                elif isinstance(i, dict):
+                    _prompt.extend([CommandPrompt(k, v) for k, v in i.iteritems()])
+                else:
+                    raise TypeError
             self.prompt = _prompt
-        elif isinstance(prompt, re._pattern_type):
-            self.prompt = [prompt]
+        elif isinstance(prompt, dict):
+            self.prompt = [CommandPrompt(k, v) for k, v in prompt.iteritems()]
         else:
             raise TypeError
 
@@ -133,26 +155,6 @@ class ShellSession(BasicSession):
             self.timeout = timeout
         else:
             self.timeout = self.default_timeout
-
-    def parse_output(self, res, command, prompt):
-        self.latest_prompt = prompt.strip()
-        if command in res:
-            return res[res.index(command) + len(command) + 1: res.rindex(prompt)].strip(), prompt
-        return res[: res.rindex(prompt)].strip(), prompt
-
-    def find_regex_response(self, res):
-        for _p in self.prompt:
-            match = _p.search(res)
-            if match:
-                return match.group()
-
-    @property
-    def latest_prompt(self):
-        return self._latest_prompt
-
-    @latest_prompt.setter
-    def latest_prompt(self, prompt):
-        self._latest_prompt = prompt
 
 
 class ShellConnection(object):
