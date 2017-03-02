@@ -9,11 +9,6 @@ config:
         timeout: 10
 
 sessions:
-    nx_session:
-        hostname: eselnts1291.mo.sw.ericsson.se
-        protocol: ssh
-        username: eghklmi
-        password: Mingtian@123
 
     telnet_session:
         level: INFO
