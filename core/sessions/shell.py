@@ -6,6 +6,11 @@ import socket
 import time
 import select
 
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
 from core.decorators.decorators import must_connected, command_execute, thread_lock
 from core.sessions.basic_session import BasicSession
 from core.sessions.exceptions.shell import ShellConnectionReadException, ExecuteTimeoutException
@@ -74,13 +79,9 @@ class ShellSession(BasicSession):
         self.set_prompt(prompt)
         self.set_timeout(timeout)
 
-        # res = list()
-
         command = Command(command=command, prompt=self.prompt, timeout=self.timeout)
         while command:
             response = self._execute(command, self.read_data_writer)
-
-            # res.append(response)
 
             if response.action:
                 command = Command(command=response.action, prompt=self.default_prompt, timeout=self.timeout)
@@ -92,7 +93,7 @@ class ShellSession(BasicSession):
     @thread_lock
     def _execute(self, command, callback=None):
         start_time = time.time()
-        res = ''
+        res = StringIO()
         self._session.write(command.command)
 
         while True:
@@ -110,8 +111,8 @@ class ShellSession(BasicSession):
                 time.sleep(self.read_duration)
                 continue
             else:
-                res += data
-                response = command.parse_output(res)
+                res.write(data)
+                response = command.parse_output(res.getvalue())
                 if response.status:
                     return response
 
