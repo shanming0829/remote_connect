@@ -117,17 +117,17 @@ class ShellSession(BasicSession):
                     return response
 
     def empty(self, retry=3):
+        empty_file = StringIO()
         while True:
             try:
-                remain_data = self._session.read(self.buffer_size, timeout=0.1)
+                empty_file.write(self._session.read(self.buffer_size, timeout=0.1))
             except ShellConnectionReadException:
                 retry -= 1
                 if retry == 0:
+                    self.logger.debug(empty_file.getvalue())
                     break
                 time.sleep(self.read_duration)
                 continue
-            else:
-                self.logger.debug(remain_data)
 
     def set_prompt(self, prompt=None):
         if prompt is None:

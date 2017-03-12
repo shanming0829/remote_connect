@@ -12,25 +12,25 @@ sessions:
 
     telnet_session:
         level: INFO
-        hostname: 192.168.33.10
+        hostname: localhost
         protocol: telnet
         username: test
         password: test
 
     ssh_session:
-        hostname: 192.168.33.10
+        hostname: localhost
         protocol: ssh
         username: test
         password: test
 
     ftp_session:
-        hostname: 192.168.33.10
+        hostname: localhost
         protocol: ftp
         username: test
         password: test
 
     sftp_session:
-        hostname: 192.168.33.10
+        hostname: localhost
         protocol: sftp
         username: test
         password: test

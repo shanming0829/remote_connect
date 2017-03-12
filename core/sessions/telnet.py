@@ -44,13 +44,13 @@ class TelnetConnection(telnetlib.Telnet, ShellConnection):
     def login(self):
         try:
             self.read_until("login:", self.timeout)
-            self.write(self.username + "\n")
+            self.write(self.username)
             if self.password:
                 self.read_until("Password:", self.timeout)
-                self.write(self.password + "\n")
+                self.write(self.password)
             connected = True
-        except:
-            raise EnvironmentError
+        except Exception as e:
+            raise e
         else:
             self.connected = connected
             self.conn = self.sock
