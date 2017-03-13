@@ -21,7 +21,7 @@ def command_execute(func, self, command, *args, **kwargs):
 
     self.logger.flush()
 
-    self.logger.debug('Execute command -> {}'.format(command))
+    self.logger.debug('Execute command -> {}'.format(command.command))
 
     res = func(self, command, *args, **kwargs)
 
