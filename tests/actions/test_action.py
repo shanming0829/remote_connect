@@ -14,6 +14,7 @@ class AppTest(unittest.TestCase):
     def test_action(self):
         session = self.app.ssh_session
 
+        session.command('cd installed/remote_connect/tests/actions')
         res = session.command('python mulit_input.py',
-                              prompt=[('Please input node password:', 'aaaa'), ('Please confirm \[y/n\]', 'y')])
+                              prompt=[('Please input node password:', 'aaaa'), ('Please confirm \[y/n\]', 'n')])
         pprint(res)
