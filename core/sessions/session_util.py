@@ -8,8 +8,9 @@ __authors__ = "Shanming Liu"
 
 
 class CommandResponse(AttributeDict):
-    def __init__(self, command=None, response=None, prompt=None, action=None, timeout=None, status=False):
+    def __init__(self, command=None, output=None, response=None, prompt=None, action=None, timeout=None, status=False):
         self.command = command
+        self.output = output
         self.response = response
         self.prompt = prompt
         self.action = action
@@ -65,11 +66,12 @@ class Command(object):
                 return match.group()
 
     def parse_output(self, res):
+        # output = res
         match_str = self._find_regex_response(res)
         if self.match_prompt:
-            res = res[: res.rindex(match_str) + len(match_str)].strip()
-            if self.command in res:
-                res = res[res.index(self.command) + len(self.command) + 1:]
+            # res = res[: res.rindex(match_str) + len(match_str)].strip()
+            # if self.command in res:
+            #     res = res[res.index(self.command) + len(self.command) + 1:]
 
             status = True
             action = self.match_prompt.action
@@ -81,7 +83,7 @@ class Command(object):
 
         return CommandResponse(
             command=self.command,
-            response=res,
+            output=res,
             prompt=match_str,
             action=action,
             timeout=self.timeout,
