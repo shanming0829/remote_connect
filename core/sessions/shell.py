@@ -88,7 +88,8 @@ class ShellSession(BasicSession):
             response = self._execute(command, self.read_data_writer)
 
             if response.action:
-                command = Command(command=response.action, prompt=self.default_prompt, timeout=self.timeout)
+                sub_prompt = self.prompt + self.default_prompt
+                command = Command(command=response.action, prompt=sub_prompt, timeout=self.timeout)
             else:
                 command = None
 
