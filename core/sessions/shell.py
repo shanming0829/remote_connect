@@ -119,6 +119,10 @@ class ShellSession(BasicSession):
         if response:
             response.output = result.getvalue()
             response.response = response.output[:response.output.rindex(response.prompt)]
+
+            if command.command in response.response:
+                response.response = response.response[
+                                    response.response.index(command.command) + len(command.command) + 1:].strip()
             return response
 
     def _expected(self, command, end_time, callback, init=''):
