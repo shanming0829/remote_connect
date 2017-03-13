@@ -13,7 +13,7 @@ except ImportError:
 
 from core.decorators.decorators import must_connected, command_execute, thread_lock
 from core.sessions.basic_session import BasicSession
-from core.sessions.exceptions.shell import ShellConnectionReadException, ExecuteTimeoutException
+from core.sessions.exceptions.shell import ShellConnectionReadException, ExecuteTimeoutException, ExecuteException
 from core.sessions.session_util import CommandPrompt, Command
 
 
@@ -70,6 +70,10 @@ class ShellSession(BasicSession):
     def close(self):
         self._session.close()
 
+    @property
+    def readable(self):
+        return self._session.readable()
+
     def read_data_writer(self, data):
         self.logger.debug(data)
 
@@ -96,6 +100,7 @@ class ShellSession(BasicSession):
         response = None
         end_time = time.time() + command.timeout
         remain_data = ''
+        matched = False
         self._session.write(command.command)
 
         def call_back(data):
@@ -104,61 +109,57 @@ class ShellSession(BasicSession):
             if callback:
                 callback(data)
 
-        while self._session.readable():
+        while self.readable:
             try:
-                response = self._expected(command, end_time, call_back, init=remain_data)
+                response = self._expected(command, end_time, call_back, init=remain_data, matched=matched)
             except ExecuteTimeoutException as e:
-                if response:
-                    break
-                else:
-                    raise e
+                raise e
+            except ExecuteException:
+                pass
             else:
                 match_index = response.output.rindex(response.prompt) + len(response.prompt)
                 remain_data = response.output[match_index + 1:]
+                matched = True
 
-        if response:
-            response.output = result.getvalue()
-            response.response = response.output[:response.output.rindex(response.prompt)]
+        response.output = result.getvalue()
+        response.response = response.output[:response.output.rindex(response.prompt)]
+        if command.command in response.response:
+            response.response = response.response[
+                                response.response.index(command.command) + len(command.command) + 1:].strip()
+        return response
 
-            if command.command in response.response:
-                response.response = response.response[
-                                    response.response.index(command.command) + len(command.command) + 1:].strip()
-            return response
-
-    def _expected(self, command, end_time, callback, init=''):
+    def _expected(self, command, end_time, callback, init='', matched=False):
         res = StringIO()
         res.write(init)
-        while True:
+
+        condition = lambda: self.readable if matched else lambda: True
+
+        while condition():
             try:
                 data = self._session.read(self.buffer_size)
             except ShellConnectionReadException:
-                tmp_time = time.time()
-                if tmp_time > end_time:
+                if time.time() > end_time:
                     raise ExecuteTimeoutException(
                         "Not match the expected prompt ->{}, timeout ->{}".format(
                             ','.join(str(i) for i in command.prompt),
                             command.timeout))
-                time.sleep(self.read_duration)
-                continue
             else:
                 callback(data)
                 res.write(data)
                 response = command.parse_output(res.getvalue())
+
                 if response.status:
                     return response
+        else:
+            raise ExecuteException('No data in socket.')
 
     def empty(self, retry=3):
         empty_file = StringIO()
-        while True:
-            try:
-                empty_file.write(self._session.read(self.buffer_size, timeout=0.1))
-            except ShellConnectionReadException:
-                retry -= 1
-                if retry == 0:
-                    self.logger.debug(empty_file.getvalue())
-                    break
-                time.sleep(self.read_duration)
-                continue
+        while self.readable and retry > 0:
+            empty_file.write(self._session.read(self.buffer_size, timeout=0.1))
+            retry -= 1
+
+        self.logger.debug(empty_file.getvalue())
 
     def set_prompt(self, prompt=None):
         if prompt is None:
