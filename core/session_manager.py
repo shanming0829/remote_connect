@@ -74,5 +74,9 @@ class _SessionManager(object):
 
         return self._create_session(session_name, protocol_type)
 
+    def copy_one_session(self, src_name, dst_name):
+        self.config.sessions[dst_name] = self.config.sessions[src_name]
+        return self.get_session(dst_name)
+
 
 SessionManager = _SessionManager

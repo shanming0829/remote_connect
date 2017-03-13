@@ -104,3 +104,20 @@ class App(object):
 
         for name, session in self.session_manager.create_sessions().iteritems():
             setattr(self, name, session)
+
+    def copy_one_session(self, src_name, dst_name):
+        """
+        Copy one session by the source session sid, the src_name should not equal with dst_name
+        :param src_name: Source session sid.
+        :param dst_name: Destination session sid.
+        :return: Session instance
+        """
+        if src_name == dst_name:
+            raise AppException('The src_name should not equal with dst_name')
+
+        if src_name not in self.config.sessions:
+            raise AppException('Can not find any source session instance,')
+        dst_session = self.session_manager.copy_one_session(src_name, dst_name)
+        setattr(self, dst_name, dst_session)
+
+        return dst_session

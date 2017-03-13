@@ -78,7 +78,6 @@ class ShellSession(BasicSession):
         self.logger.debug(data)
 
     @must_connected
-    @command_execute
     def command(self, command, prompt=None, timeout=None):
         self.set_prompt(prompt)
         self.set_timeout(timeout)
@@ -96,6 +95,7 @@ class ShellSession(BasicSession):
         return response
 
     @thread_lock
+    @command_execute
     def _execute(self, command, callback=None):
         result = StringIO()
         response = None

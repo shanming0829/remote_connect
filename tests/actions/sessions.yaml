@@ -11,7 +11,7 @@ config:
 sessions:
 
     ssh_session:
-        hostname: eselnts1291.mo.sw.ericsson.se
+        hostname: localhost
         protocol: ssh
-        username: eghklmi
-        password: 1qaz@wsx
+        username: test
+        password: test
