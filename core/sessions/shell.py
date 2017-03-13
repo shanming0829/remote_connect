@@ -92,18 +92,44 @@ class ShellSession(BasicSession):
 
     @thread_lock
     def _execute(self, command, callback=None):
-        start_time = time.time()
-        res = StringIO()
+        result = StringIO()
+        response = None
+        end_time = time.time() + command.timeout
+        remain_data = ''
         self._session.write(command.command)
 
+        def call_back(data):
+            result.write(data)
+
+            if callback:
+                callback(data)
+
+        while self._session.readable():
+            try:
+                response = self._expected(command, end_time, call_back, init=remain_data)
+            except ExecuteTimeoutException as e:
+                if response:
+                    break
+                else:
+                    raise e
+            else:
+                match_index = response.output.rindex(response.prompt) + len(response.prompt)
+                remain_data = response.output[match_index + 1:]
+
+        if response:
+            response.output = result.getvalue()
+            response.response = response.output[:response.output.rindex(response.prompt)]
+            return response
+
+    def _expected(self, command, end_time, callback, init=''):
+        res = StringIO()
+        res.write(init)
         while True:
             try:
                 data = self._session.read(self.buffer_size)
-                if callback:
-                    callback(data)
             except ShellConnectionReadException:
                 tmp_time = time.time()
-                if tmp_time - start_time > command.timeout:
+                if tmp_time > end_time:
                     raise ExecuteTimeoutException(
                         "Not match the expected prompt ->{}, timeout ->{}".format(
                             ','.join(str(i) for i in command.prompt),
@@ -111,6 +137,7 @@ class ShellSession(BasicSession):
                 time.sleep(self.read_duration)
                 continue
             else:
+                callback(data)
                 res.write(data)
                 response = command.parse_output(res.getvalue())
                 if response.status:
@@ -172,11 +199,15 @@ class ShellConnection(object):
     def write(self, buffer):
         raise NotImplementedError
 
-    def read(self, buffer_size, timeout=None):
+    def readable(self, timeout=None):
         if timeout:
             rlist, _, _ = select.select(self.rlist, self.wlist, self.xlist, timeout)
         else:
             rlist, _, _ = select.select(self.rlist, self.wlist, self.xlist, self.timeout)
-        if len(rlist) > 0:
+
+        return True if len(rlist) > 0 else False
+
+    def read(self, buffer_size, timeout=None):
+        if self.readable(timeout):
             return self.conn.recv(buffer_size)
         raise ShellConnectionReadException
