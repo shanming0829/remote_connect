@@ -1,5 +1,5 @@
 import unittest
-from core.test_app import App
+from core.app import App
 import pprint
 
 
