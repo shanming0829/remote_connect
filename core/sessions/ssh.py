@@ -31,14 +31,13 @@ class SSHSession(ShellSession):
 
 
 class SSHConnection(paramiko.SSHClient, ShellConnection):
-    def __init__(self, hostname=None, port=0, username=None, password=None, timeout=5, crlf=None, lock=None):
+    def __init__(self, hostname=None, port=0, username=None, password=None, timeout=5, crlf=None):
         self.connected = None
         self.hostname = hostname
         self.port = port
         self.username = username
         self.password = password
         self.timeout = timeout
-        self.lock = lock
 
         self.conn = None
 

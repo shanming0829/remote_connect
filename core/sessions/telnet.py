@@ -29,7 +29,7 @@ class TelnetSession(ShellSession):
 
 
 class TelnetConnection(telnetlib.Telnet, ShellConnection):
-    def __init__(self, host=None, port=0, username=None, password=None, timeout=5, crlf=None, lock=None):
+    def __init__(self, host=None, port=0, username=None, password=None, timeout=5, crlf=None):
         self.connected = False
 
         self.username = username
