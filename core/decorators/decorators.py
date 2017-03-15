@@ -9,7 +9,7 @@ __authors__ = "Shanming Liu"
 @decorator
 def must_connected(func, self, *args, **kwargs):
     if not self.connected:
-        self.logger.debug('Currently not login into {} ....\n'.format(self.hostname))
+        self.logger.debug('Currently not login into {} ....'.format(self.hostname))
         self.login()
 
     return func(self, *args, **kwargs)
@@ -21,7 +21,7 @@ def command_execute(func, self, command, *args, **kwargs):
 
     self.logger.flush()
 
-    self.logger.info('Execute command -> {}\n'.format(command.command))
+    self.logger.info('Execute command -> {}'.format(command.command))
 
     res = func(self, command, *args, **kwargs)
 
@@ -64,3 +64,8 @@ def class_singleton(cls):
         return _instances[instance_name]
 
     return _singleton
+
+
+@decorator
+def log_strip(func, self, msg, *args, **kwargs):
+    func(self, msg.strip(), *args, **kwargs)
