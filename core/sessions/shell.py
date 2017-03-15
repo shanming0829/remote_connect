@@ -48,20 +48,20 @@ class ShellSession(BasicSession):
         connected = False
         while not connected:
             try:
-                self.logger.info('Try connect to {}.\n'.format(self.hostname))
-                self.logger.debug('hostname: {}, port: {}, username: {}, password: {}\n'.
+                self.logger.info('Try connect to {}.'.format(self.hostname))
+                self.logger.debug('hostname: {}, port: {}, username: {}, password: {}'.
                                   format(self.hostname, self.port, self.username, self.password))
                 session = self._connection_prototype(self.hostname, self.port, self.username, self.password,
                                                      timeout=self.read_timeout, crlf=self.crlf)
                 connected = True
             except socket.error as e:
-                self.logger.info('Connect to server failed, try reconnect ....\n')
+                self.logger.info('Connect to server failed, try reconnect ....')
                 retry -= 1
                 if retry <= 0:
                     raise e
                 continue
             else:
-                self.logger.info('Connected to {} succeed.\n'.format(self.hostname))
+                self.logger.info('Connected to {} succeed.'.format(self.hostname))
                 self._connected = connected
                 self._session = session
             finally:

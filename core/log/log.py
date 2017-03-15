@@ -5,6 +5,8 @@ import logging
 import os
 import sys
 
+from core.decorators.decorators import log_strip
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -110,7 +112,7 @@ class Logger(object):
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(self.level)
 
-        self.cache_manager = LogCacheManager(self.logger)
+        # self.cache_manager = LogCacheManager(self.logger)
 
     def enable_console_handle(self, formatter=None):
         console_handle = logging.StreamHandler(stream=sys.stdout)
@@ -141,6 +143,28 @@ class Logger(object):
             return getattr(self.logger, item)
         except AttributeError:
             raise LoggerAttributeError("No Attribute name of {}".format(str(item)))
+
+    @log_strip
+    def info(self, msg):
+        self.logger.info(msg)
+
+    @log_strip
+    def debug(self, msg):
+        self.logger.debug(msg)
+
+    @log_strip
+    def critical(self, msg):
+        self.logger.critical(msg)
+
+    @log_strip
+    def error(self, msg):
+        self.logger.error(msg)
+
+    @log_strip
+    def warn(self, msg):
+        self.logger.warn(msg)
+
+    warning = warn
 
     def flush(self):
         # self.cache_manager.flush()
