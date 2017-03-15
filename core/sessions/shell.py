@@ -32,6 +32,8 @@ class ShellSession(BasicSession):
         self.read_timeout = 1
         self.read_duration = 0.1
 
+        self.command_output = None
+
         self._session = None
         self._connected = False
         self._connection_prototype = None
@@ -46,21 +48,20 @@ class ShellSession(BasicSession):
         connected = False
         while not connected:
             try:
-                self.logger.info('Try connect to {}.'.format(self.hostname))
-                self.logger.debug('hostname: {}, port: {}, username: {}, password: {}'.
+                self.logger.info('Try connect to {}.\n'.format(self.hostname))
+                self.logger.debug('hostname: {}, port: {}, username: {}, password: {}\n'.
                                   format(self.hostname, self.port, self.username, self.password))
                 session = self._connection_prototype(self.hostname, self.port, self.username, self.password,
-                                                     timeout=self.read_timeout, crlf=self.crlf,
-                                                     lock=self.lock)
+                                                     timeout=self.read_timeout, crlf=self.crlf)
                 connected = True
             except socket.error as e:
-                self.logger.info('Connect to server failed, try reconnect ....')
+                self.logger.info('Connect to server failed, try reconnect ....\n')
                 retry -= 1
                 if retry <= 0:
                     raise e
                 continue
             else:
-                self.logger.info('Connected to {} succeed.'.format(self.hostname))
+                self.logger.info('Connected to {} succeed.\n'.format(self.hostname))
                 self._connected = connected
                 self._session = session
             finally:
@@ -74,7 +75,8 @@ class ShellSession(BasicSession):
     def readable(self):
         return self._session.readable()
 
-    def read_data_writer(self, data):
+    def socket_data_receive(self, data):
+        self.command_output.write(data)
         self.logger.debug(data)
 
     @must_connected
@@ -82,22 +84,25 @@ class ShellSession(BasicSession):
         self.set_prompt(prompt)
         self.set_timeout(timeout)
 
+        self.command_output = StringIO()
+        response = None
+
         command = Command(command=command, prompt=self.prompt, timeout=self.timeout)
         while command:
-            response = self._execute(command, self.read_data_writer)
+            response = self._execute(command)
 
             if response.action:
                 sub_prompt = self.prompt + self.default_prompt
                 command = Command(command=response.action, prompt=sub_prompt, timeout=self.timeout)
             else:
                 command = None
-
+        response.output = self.command_output.getvalue()
         return response
 
-    @thread_lock
+    # @thread_lock
     @command_execute
-    def _execute(self, command, callback=None):
-        result = StringIO()
+    def _execute(self, command):
+        command_output = StringIO()
         response = None
         end_time = time.time() + command.timeout
         remain_data = ''
@@ -105,10 +110,8 @@ class ShellSession(BasicSession):
         self._session.write(command.command)
 
         def call_back(data):
-            result.write(data)
-
-            if callback:
-                callback(data)
+            command_output.write(data)
+            self.socket_data_receive(data)
 
         while self.readable:
             try:
@@ -122,7 +125,7 @@ class ShellSession(BasicSession):
                 remain_data = response.output[match_index + 1:]
                 matched = True
 
-        response.output = result.getvalue()
+        response.output = command_output.getvalue()
         response.response = response.output[:response.output.rindex(response.prompt)]
         if command.command in response.response:
             response.response = response.response[
@@ -155,12 +158,9 @@ class ShellSession(BasicSession):
             raise ExecuteException('No data in socket.')
 
     def empty(self, retry=3):
-        empty_file = StringIO()
         while self.readable and retry > 0:
-            empty_file.write(self._session.read(self.buffer_size, timeout=0.1))
+            self.socket_data_receive(self._session.read(self.buffer_size, timeout=0.1))
             retry -= 1
-
-        self.logger.debug(empty_file.getvalue())
 
     def set_prompt(self, prompt=None):
         if prompt is None:
@@ -176,6 +176,8 @@ class ShellSession(BasicSession):
                     _prompt.append(CommandPrompt(*i[:2]))
                 elif isinstance(i, dict):
                     _prompt.extend([CommandPrompt(k, v) for k, v in i.iteritems()])
+                elif i is None:
+                    _prompt.extend(self.default_prompt)
                 else:
                     raise TypeError
             self.prompt = _prompt
