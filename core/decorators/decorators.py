@@ -68,4 +68,6 @@ def class_singleton(cls):
 
 @decorator
 def log_strip(func, self, msg, *args, **kwargs):
-    func(self, msg.strip(), *args, **kwargs)
+    msg = msg.strip()
+    if msg:
+        func(self, msg, *args, **kwargs)
