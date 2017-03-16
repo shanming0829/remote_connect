@@ -91,7 +91,7 @@ class ShellSession(BasicSession):
         while command:
             response = self._execute(command)
 
-            if response.action:
+            if response.action is not None:
                 sub_prompt = self.prompt + self.default_prompt
                 command = Command(command=response.action, prompt=sub_prompt, timeout=self.timeout)
             else:
