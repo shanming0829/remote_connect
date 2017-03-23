@@ -11,18 +11,20 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-from core.decorators.decorators import must_connected, command_execute, thread_lock
+from core.decorators.decorators import must_connected, command_execute
 from core.sessions.basic_session import BasicSession
-from core.sessions.exceptions.shell import ShellConnectionReadException, ExecuteTimeoutException, ExecuteException
+from core.sessions.exceptions.shell import ShellConnectionReadException, ExecuteTimeoutException, ExecuteException, \
+    ConnectionLoginException
 from core.sessions.session_util import CommandPrompt, Command
+
+DEFAULT_PROMPT = [CommandPrompt(prompt=i, action=None) for i in (r'[\r\n].*?>', r'[\r\n].*?\$', r'[\r\n].*?%')]
 
 
 class ShellSession(BasicSession):
     def __init__(self, sid=None, hostname=None, port=None, username=None, password=None, logger=None, timeout=None,
                  crlf=None,
                  **kwargs):
-        self.default_prompt = [CommandPrompt(prompt=i, action=None) for i in
-                               (r'[\r\n].*?>', r'[\r\n].*?\$', r'[\r\n].*?%')]
+        self.default_prompt = DEFAULT_PROMPT
         self.prompt = self.default_prompt
         self.default_timeout = timeout
         self.match_prompt = None
@@ -54,10 +56,11 @@ class ShellSession(BasicSession):
                 session = self._connection_prototype(self.hostname, self.port, self.username, self.password,
                                                      timeout=self.read_timeout, crlf=self.crlf)
                 connected = True
-            except socket.error as e:
+            except ConnectionLoginException as e:
                 self.logger.info('Connect to server failed, try reconnect ....')
                 retry -= 1
                 if retry <= 0:
+                    self.logger.error('Build connection failure, please check the configuration')
                     raise e
                 continue
             else:
@@ -113,13 +116,15 @@ class ShellSession(BasicSession):
             command_output.write(data)
             self.socket_data_receive(data)
 
-        while self.readable:
+        while True:
             try:
                 response = self._expected(command, end_time, call_back, init=remain_data, matched=matched)
             except ExecuteTimeoutException as e:
+                self.logger.error('Execute command ->"{}" failure'.format(command.command))
+                self.logger.error(e.message)
                 raise e
             except ExecuteException:
-                pass
+                break
             else:
                 match_index = response.output.rindex(response.prompt) + len(response.prompt)
                 remain_data = response.output[match_index + 1:]
@@ -191,6 +196,18 @@ class ShellSession(BasicSession):
             self.timeout = timeout
         else:
             self.timeout = self.default_timeout
+
+    def __getstate__(self):
+        session_dict = self.__dict__.copy()
+        session_dict['_connected'] = False
+        session_dict['command_output'] = False
+        session_dict['_session'] = None
+        return session_dict
+
+    def __setstate__(self, state):
+        state['command_output'] = StringIO()
+        state['default_prompt'] = DEFAULT_PROMPT
+        self.__dict__.update(state)
 
 
 class ShellConnection(object):

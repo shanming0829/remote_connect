@@ -18,10 +18,10 @@ sessions:
         password: test
 
     ssh_session:
-        hostname: localhost
+        hostname: eselnts1291.mo.sw.ericsson.se
         protocol: ssh
-        username: test
-        password: test
+        username: eghklmi
+        password: 1qaz@wsx
 
     ftp_session:
         hostname: localhost

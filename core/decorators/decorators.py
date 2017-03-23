@@ -2,8 +2,11 @@
 from __future__ import unicode_literals
 from decorator import decorator
 from core.context.contexts import thread_acquire_and_release
+from core.log.log import Logger
 
 __authors__ = "Shanming Liu"
+
+logger = Logger()
 
 
 @decorator
@@ -66,8 +69,25 @@ def class_singleton(cls):
     return _singleton
 
 
-@decorator
-def log_strip(func, self, msg, *args, **kwargs):
-    msg = msg.strip()
-    if msg:
-        func(self, msg, *args, **kwargs)
+class SingletonMeta(type):
+    def __call__(cls, *args, **kwargs):
+        if not hasattr(cls, "_instance"):
+            cls._instance = super(SingletonMeta, cls).__call__(*args, **kwargs)
+        return cls._instance
+
+
+def test_step(msg):
+    @decorator
+    def wrapper_func(func, *args, **kwargs):
+        return func(*args, **kwargs)
+
+    def inner(*args, **kwargs):
+        return msg(*args, **kwargs)
+
+    if isinstance(msg, basestring):
+        logger.info('Current step -> {}'.format(msg))
+        return wrapper_func
+    elif callable(msg):
+        logger.info('Current step -> {}'.format(msg.__name__))
+        return inner
+    raise NotImplementedError("Not support other data type")

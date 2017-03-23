@@ -4,8 +4,7 @@ from __future__ import unicode_literals
 import logging
 import os
 import sys
-
-from core.decorators.decorators import log_strip
+from decorator import decorator
 
 try:
     from cStringIO import StringIO
@@ -80,25 +79,33 @@ class LogCacheManager(object):
             cache.flush()
 
 
+@decorator
+def log_strip(func, self, msg, *args, **kwargs):
+    msg = msg.strip()
+    if msg:
+        func(self, msg, *args, **kwargs)
+
+
 class Logger(object):
-    def __init__(self, name, level=logging.INFO, console=True, file_path=None):
-        self.name = name
+    FORMATTER = logging.Formatter(fmt='%(asctime)s <%(name)-5s> [%(levelname)-5s] %(message)s')
+
+    def __init__(self, name=None, level=logging.INFO, console=True, filename=None):
+        if name is None:
+            self.name = 'runner'
+        else:
+            self.name = name
         self.level = level
-        self.logger_formatter = logging.Formatter(fmt='%(asctime)s [%(levelname)-5s] %(message)s')
-        self.console = console
+        self.logger_formatter = None
+
+        self._console = False
+        self._filename = None
 
         self.logger = None
         self.cache_manager = None
         self._init_logger()
 
-        # self.register_caches()
-        # self.partial_attribute()
-
-        if console:
-            self.enable_console_handle()
-
-        if file_path:
-            self.enable_log_file_handle(file_path)
+        self.console = console
+        self.filename = filename
 
     def register_caches(self):
         for log_type in self.cache_manager.ATTR:
@@ -112,31 +119,64 @@ class Logger(object):
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(self.level)
 
-        # self.cache_manager = LogCacheManager(self.logger)
+    @property
+    def console(self):
+        return self._console
+
+    @console.setter
+    def console(self, value):
+        self._console = bool(value)
+
+        if self.console:
+            self.enable_console_handle()
+
+    @property
+    def filename(self):
+        return self._filename
+
+    @filename.setter
+    def filename(self, filename):
+        self._filename = filename
+
+        if self.filename:
+            self.enable_log_file_handle(filename)
 
     def enable_console_handle(self, formatter=None):
-        console_handle = logging.StreamHandler(stream=sys.stdout)
-        console_handle.setFormatter(self.get_log_formatter(formatter))
-        self.logger.addHandler(console_handle)
+        if not self.get_console_handle():
+            console_handle = logging.StreamHandler(stream=sys.stdout)
+            if formatter is None:
+                formatter = self.FORMATTER
+            console_handle.setFormatter(formatter)
+            self.logger.addHandler(console_handle)
 
-    def enable_log_file_handle(self, filename, mode='w', formatter=None):
-        try:
-            os.makedirs(os.path.dirname(filename))
-        except OSError:
-            pass
+    def enable_log_file_handle(self, filename, mode='a', formatter=None):
+        if not self.get_file_handle(filename):
+            try:
+                os.makedirs(os.path.dirname(filename))
+            except OSError:
+                pass
 
-        file_handle = logging.FileHandler(filename, mode=mode)
-        file_handle.setFormatter(self.get_log_formatter(formatter))
-        self.logger.addHandler(file_handle)
+            file_handle = logging.FileHandler(filename, mode=mode)
+            if formatter is None:
+                formatter = self.FORMATTER
+            file_handle.setFormatter(formatter)
+            self.logger.addHandler(file_handle)
 
-    def get_log_formatter(self, formatter):
-        return self.logger_formatter if formatter is None else formatter
+    def get_console_handle(self):
+        for handle in self.logger.handlers:
+            if isinstance(handle, logging.StreamHandler):
+                return handle
 
-    def get_child(self, suffix, level=logging.DEBUG, console=False, file_path=None):
+    def get_file_handle(self, filename):
+        for handle in self.logger.handlers:
+            if isinstance(handle, logging.FileHandler) and handle.baseFilename == os.path.abspath(filename):
+                return handle
+
+    def get_child(self, suffix, level=logging.DEBUG, console=False, filename=None):
         if self.logger.root is not self.logger:
             suffix = '.'.join((self.name, suffix))
 
-            return Logger(suffix, level=level, console=console, file_path=file_path)
+            return Logger(suffix, level=level, console=console, filename=filename)
 
     def __getattr__(self, item):
         try:
@@ -171,13 +211,38 @@ class Logger(object):
         for handle in self.logger.handlers:
             handle.flush()
 
+    def __getstate__(self):
+        log_dict = dict()
+        log_dict['name'] = self.name
+        log_dict['level'] = self.level
+        log_dict['console'] = self.console
+        log_dict['filename'] = self.filename
+        self.__dict__['log_dict'] = log_dict
+        odict = self.__dict__.copy()
+        del odict['logger']
+        return odict
+
+    def __setstate__(self, state):
+        log_dict = state['log_dict']
+        del state['log_dict']
+        self.__dict__.update(state)
+        self._init_logger()
+        self.console = log_dict['console']
+        self.filename = log_dict['filename']
+
 
 if __name__ == '__main__':
-    logger1 = Logger('aaaa', level='DEBUG', file_path='test1.log')
-    logger2 = logger1.get_child('bbb', file_path='test2.log')
+    logger1 = Logger('aaaa', level='DEBUG', filename='test1.log')
+    logger2 = logger1.get_child('bbb', filename='test2.log')
     # logger2.addHandler(console_handle)
 
     logger1.debug('aa')
     logger2.info('bb')
+    try:
+        raise Exception('exception')
+    except Exception as e:
+        logger1.error(e.message)
+    finally:
+        logger1.error('aaa')
     # logger1.flush()
     # logger2.flush()

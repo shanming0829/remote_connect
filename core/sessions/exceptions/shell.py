@@ -15,3 +15,7 @@ class ExecuteTimeoutException(ExecuteException):
 
 class ShellConnectionReadException(Exception):
     pass
+
+
+class ConnectionLoginException(Exception):
+    pass

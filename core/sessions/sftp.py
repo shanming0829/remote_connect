@@ -20,14 +20,14 @@ class SFTPSession(BasicFTPSession):
         self._connection_prototype = SFTPConnection
         return super(SFTPSession, self).login(retry)
 
-    @thread_lock
+    # @thread_lock
     def upload_file(self, local_file_path, remote_file_path=None):
         super(SFTPSession, self).upload_file(local_file_path, remote_file_path)
         local_file_name = os.path.basename(local_file_path)
         remote_file_path = remote_file_path if remote_file_path else local_file_name
         self._session.put(local_file_path, remote_file_path)
 
-    @thread_lock
+    # @thread_lock
     def download_file(self, remote_file_path, local_file_path=None):
         super(SFTPSession, self).download_file(remote_file_path, local_file_path)
         remote_file_name = os.path.basename(remote_file_path)

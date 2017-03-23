@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 import paramiko
 
+from core.sessions.exceptions.shell import ConnectionLoginException
 from core.sessions.shell import ShellSession, must_connected, ShellConnection
 
 
@@ -29,6 +30,9 @@ class SSHSession(ShellSession):
         self._connection_prototype = SSHConnection
         return super(SSHSession, self).login(retry)
 
+    def open_sftp(self):
+        return self._session.open_sftp()
+
 
 class SSHConnection(paramiko.SSHClient, ShellConnection):
     def __init__(self, hostname=None, port=0, username=None, password=None, timeout=5, crlf=None):
@@ -55,7 +59,7 @@ class SSHConnection(paramiko.SSHClient, ShellConnection):
                          timeout=self.timeout)
             connected = True
         except (paramiko.AuthenticationException, paramiko.PasswordRequiredException, paramiko.SSHException) as e:
-            raise e
+            raise ConnectionLoginException(e)
         else:
             self.connected = connected
             self.conn = self.invoke_shell()

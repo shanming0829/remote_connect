@@ -105,8 +105,14 @@ class BasicFTPSession(BasicSession):
         yield
         self.chdir(old_path)
 
-    def __getattr__(self, item):
-        if hasattr(self._session, item):
-            return getattr(self._session, item)
-
-        raise AttributeError
+    # def __getattr__(self, item):
+    #     if hasattr(self._session, item):
+    #         return getattr(self._session, item)
+    #
+    #     raise AttributeError
+    #
+    # def __getstate__(self):
+    #     session_dict = self.__dict__.copy()
+    #     session_dict['_connected'] = False
+    #     session_dict['_session'] = None
+    #     return session_dict

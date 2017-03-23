@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import os
 import datetime
 
-from core.decorators.decorators import class_singleton
+from core.decorators.decorators import SingletonMeta
 from core.session_manager import SessionManager
 from core.log.log import Logger
 from core.utils.attribuate_dict import AttributeDict
@@ -17,8 +17,10 @@ class AppException(RuntimeError):
     pass
 
 
-@class_singleton
 class App(object):
+
+    __metaclass__ = SingletonMeta
+
     def __init__(self, config_path=None):
         self.session_manager = None
 

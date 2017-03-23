@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 import abc
-from threading import RLock
+# from threading import RLock
 
 
 class ClosingContextManager(object):
@@ -25,7 +25,7 @@ class BasicSession(ClosingContextManager):
         self.logger = logger
         self.__dict__.update(kwargs)
 
-        self.lock = RLock()
+        # self.lock = RLock()
         super(BasicSession, self).__init__()
 
     @abc.abstractmethod

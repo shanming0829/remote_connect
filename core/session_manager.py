@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import os
+import weakref
 
 from core.utils.config import Config
 from sessions import TelnetSession, SSHSession, FTPSession, SFTPSession
@@ -22,9 +23,9 @@ class _SessionManager(object):
 
     def __init__(self, logger):
         self.config = Config()
-
+        self.sessions = {}
         self.parent_logger = logger
-        self.logger = logger.getChild('session_manager')
+        self.logger = logger.get_child('session_manager')
 
     def create_sessions(self):
         sessions = dict()
@@ -38,8 +39,8 @@ class _SessionManager(object):
 
         session_config = self.config.sessions[session_name]
         child_file_path = os.path.join(self.config.config.log.dir, '{}.log'.format(session_name))
-        child_logger = self.parent_logger.get_child(session_name, level=session_config.level, file_path=child_file_path)
-        return protocol_type(sid=session_name, logger=child_logger, **session_config)
+        child_logger = self.parent_logger.get_child(session_name, level=session_config.level, filename=child_file_path)
+        self.sessions[session_name] = protocol_type(sid=session_name, logger=child_logger, **session_config)
 
     def _check_session_type(self, session_name, session_config):
         port = session_config.get('port', None)
@@ -66,13 +67,19 @@ class _SessionManager(object):
                     "Create session {} failed, given port is not regular, please given protocol".format(session_name))
 
     def get_session(self, session_name):
+
+        if session_name in self.sessions:
+            return weakref.proxy(self.sessions[session_name])
+
         session_config = self.config.sessions.get(session_name, None)
         if not session_config:
             raise SessionManagerWarning("Create session {} failed, no detail info for session".format(session_name))
 
         protocol_type = self._check_session_type(session_name, session_config)
 
-        return self._create_session(session_name, protocol_type)
+        self._create_session(session_name, protocol_type)
+
+        return self.get_session(session_name)
 
     def copy_one_session(self, src_name, dst_name):
         self.config.sessions[dst_name] = self.config.sessions[src_name]
