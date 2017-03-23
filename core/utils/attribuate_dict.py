@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 import yaml
 
+import pprint
+
 __authors__ = "Shanming Liu"
 
 
@@ -19,14 +21,20 @@ class AttributeDict(dict):
 
     def update_dict(self, **kwargs):
         for k, v in kwargs.iteritems():
-            if isinstance(v, (basestring, int, float, AttributeDict)):
+            if isinstance(v, (basestring, int, float)):
                 self[k] = v
-            elif isinstance(v, dict):
+            elif isinstance(v, (dict, AttributeDict)):
                 tmp_dict = AttributeDict()
+                if k in self:
+                    tmp_dict.update_dict(**self[k])
                 tmp_dict.update_dict(**v)
                 self[k] = tmp_dict
             elif isinstance(v, (tuple, list)):
-                self[k] = self.update_list(*v)
+                tmp_list = []
+                if k in self:
+                    tmp_list.extend(self[k])
+                tmp_list.extend(v)
+                self[k] = self.update_list(*tmp_list)
 
     def update_list(self, *args):
         values = []
@@ -52,5 +60,9 @@ class AttributeDict(dict):
 
 if __name__ == '__main__':
     d = AttributeDict()
-    d.update_dict(a=10, b={'c': 20, 'd': 30, 'e': [1, [2, 3]]})
-    print(d.b.e)
+    # d.update_dict(a=10, b={'c': 20, 'd': 30, 'e': [1, [2, 3]]})
+    # print(d.b.e)
+
+    d.a.b.c = 10
+
+    pprint.pprint(d)

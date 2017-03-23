@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 import telnetlib
 
+from core.sessions.exceptions.shell import ConnectionLoginException
 from core.sessions.shell import ShellSession, must_connected, ShellConnection
 
 
@@ -50,7 +51,7 @@ class TelnetConnection(telnetlib.Telnet, ShellConnection):
                 self.write(self.password)
             connected = True
         except Exception as e:
-            raise e
+            raise ConnectionLoginException(e)
         else:
             self.connected = connected
             self.conn = self.sock
