@@ -79,15 +79,17 @@ class SingletonMeta(type):
 def test_step(msg):
     @decorator
     def wrapper_func(func, *args, **kwargs):
+        logger.info(real_msg)
         return func(*args, **kwargs)
 
     def inner(*args, **kwargs):
+        logger.info(real_msg)
         return msg(*args, **kwargs)
 
     if isinstance(msg, basestring):
-        logger.info('Current step -> {}'.format(msg))
+        real_msg = 'Current step -> {}'.format(msg)
         return wrapper_func
     elif callable(msg):
-        logger.info('Current step -> {}'.format(msg.__name__))
+        real_msg = 'Current step -> {}'.format(msg.__name__)
         return inner
     raise NotImplementedError("Not support other data type")

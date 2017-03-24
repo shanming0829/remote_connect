@@ -122,6 +122,7 @@ class ShellSession(BasicSession):
             except ExecuteTimeoutException as e:
                 self.logger.error('Execute command ->"{}" failure'.format(command.command))
                 self.logger.error(e.message)
+                self.logger.flush()
                 raise e
             except ExecuteException:
                 break
