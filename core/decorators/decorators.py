@@ -24,11 +24,12 @@ def command_execute(func, self, command, *args, **kwargs):
 
     self.logger.flush()
 
-    self.logger.info('Execute command -> {}'.format(command.command))
+    self.logger.info('Execute command->"{}", expected prompt->"{}"'.format(command.command,
+                                                                           ','.join(str(i) for i in command.prompt)))
 
     res = func(self, command, *args, **kwargs)
 
-    self.logger.debug('Matched prompt -> {}'.format(res.prompt.strip()))
+    self.logger.info('Matched prompt->"{}"'.format(res.prompt.strip()))
 
     return res
 
