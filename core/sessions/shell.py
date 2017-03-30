@@ -24,8 +24,6 @@ class ShellSession(BasicSession):
     def __init__(self, sid=None, hostname=None, port=None, username=None, password=None, logger=None, timeout=None,
                  crlf=None,
                  **kwargs):
-        self.default_prompt = DEFAULT_PROMPT
-        self.prompt = self.default_prompt
         self.default_timeout = timeout
         self.match_prompt = None
         self.timeout = self.default_timeout
@@ -39,6 +37,14 @@ class ShellSession(BasicSession):
         self._session = None
         self._connected = False
         self._connection_prototype = None
+
+        if 'default_prompt' in kwargs:
+            user_prompt = kwargs.pop('default_prompt')
+            self.set_prompt(user_prompt)
+            self.default_prompt = self.prompt
+        else:
+            self.default_prompt = DEFAULT_PROMPT
+            self.prompt = self.default_prompt
 
         super(ShellSession, self).__init__(sid, hostname, port, username, password, logger, **kwargs)
 
@@ -175,7 +181,7 @@ class ShellSession(BasicSession):
             self.prompt = [CommandPrompt(prompt=prompt, action=None)]
         elif isinstance(prompt, (tuple, list)):
             _prompt = list()
-            for i in prompt:
+            for i in set(prompt):
                 if isinstance(i, basestring):
                     _prompt.append(CommandPrompt(prompt=i, action=None))
                 elif isinstance(i, (tuple, list)):

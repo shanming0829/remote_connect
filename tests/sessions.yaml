@@ -22,6 +22,8 @@ sessions:
         protocol: ssh
         username: eghklmi
         password: 1qaz@wsx
+        default_prompt:
+            - '[\r\n]eselnts1291.*?>'
 
     ftp_session:
         hostname: localhost
